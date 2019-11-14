@@ -1,0 +1,142 @@
+variables:
+  INSTALL_PATH: "/tmp/ancs"
+  SYSTEMD_USER: "ancs"
+  SYSTEMD_GROUP: "ancs"
+  SYSTEMD_UNIT_DIR: "/lib/systemd/system"
+  SYSTEMD_UNIT_FILE: "gateway_workers.service"
+
+#=======================#
+#        Stages         #
+#=======================#
+stages:
+  - preparation
+  - building
+  - testing
+  - deploy
+  - cleanup
+
+#=======================#
+#       Scripts         #
+#=======================#
+.deploy_source: &script_preparation_venv |
+  echo "Running preparation..."
+  date
+  echo -e "Checking system dependencies..."
+  sudo /usr/bin/apt-get install -y python3-dev python3-pip python3-venv 2> /dev/null || \
+    (echo -e "\t\e[31mCould not install dependencies, aborting\e[0m" && exit 1)
+  echo -e "\e[1m\e[92mDone\e[0m\n"
+
+  echo "Building EGG file..."
+  python3 setup.py bdist_egg
+  egg_file=$(find ./dist -name \*.egg)
+  if [ -z "${egg_file}" ]; then
+    echo -e "\e[31mCould not find any suitable EGG file, aborting\e[0m"
+    exit 1
+  fi
+  echo -e "Done\n"
+
+.deploy_source_rpi: &script_preparation_rpi |
+  echo "Running RPi preparation..."
+  date
+  echo -e "Done\n"
+
+.build_venv: &script_build_venv |
+  echo "Running venv build..."
+  date
+  echo -e "\tCreating virtualenv..."
+  rm -rf ./venv 2> /dev/null
+  python3 -m venv venv
+  . venv/bin/activate || (echo -e "\t\e[31mCould not activate virtualenv, aborting\e[0m" && exit 1)
+  echo -e "\tInstalling pip dependencies..."
+  pip3 install -r requirements.txt || (echo -e "\t\e[31mCould not install pip3 dependencies, aborting\e[0m" && exit 1)
+  deactivate || echo -e "\t\e[31mCould not deactivate venv, aborting\e[0m"
+  echo -e "Done\n"
+
+.build_prod: &script_build_prod |
+  echo "Running build prod..."
+  date
+  echo -e "Done\n"
+
+.run_tests_venv: &script_run_tests_venv |
+  echo "Running tests..."
+  date
+  . venv/bin/activate || (echo -e "\t\e[31mCould not activate virtualenv, aborting\e[0m" && exit 1)
+  tox
+  deactivate || echo -e "\t\e[31mCould not deactivate venv, aborting\e[0m"
+  echo -e "Done\n"
+
+.run_tests_rpi: &script_run_tests_rpi
+  echo "Running tests..."
+  date
+  echo -e "Done\n"
+
+.install: &script_install |
+  echo "Running install..."
+  date
+  echo -e "Done\n"
+
+.cleanup: &script_cleanup |
+  echo "Running cleanup..."
+  date
+  echo -e "Done\n"
+
+#=======================#
+#        Steps          #
+#=======================#
+setup_dev:
+  stage: preparation
+  tags: [ancs, test, dev]
+  script:
+    - *script_preparation_venv
+
+setup_rpi:
+  stage: preparation
+  tags: [ancs, preprod, prod]
+  script:
+    - *script_preparation_rpi
+
+build_venv:
+  stage: building
+  tags: [ancs, test, dev]
+  script:
+    - *script_build_venv
+  artifacts:
+    when: on_success
+    name: "${CI_PIPELINE_ID}-venv"
+    paths:
+      - venv
+
+build_rpi:
+  stage: building
+  tags: [ancs, preprod, prod]
+  script:
+    - *script_build_prod
+
+test_venv:
+  stage: testing
+  tags: [ancs, test]
+  script:
+    - *script_run_tests_venv
+  dependencies:
+    - build_venv
+
+test_rpi:
+  stage: testing
+  tags: [ancs, preprod]
+  script:
+    - *script_run_tests_rpi
+  dependencies: []
+
+deploy:
+  stage: deploy
+  tags: [ancs, prod]
+  script:
+    - *script_install
+  dependencies: []
+
+clean:
+  stage: cleanup
+  when: on_failure
+  tags: [ancs]
+  script:
+    - *script_cleanup

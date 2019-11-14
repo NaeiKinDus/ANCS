@@ -1,0 +1,7 @@
+# Command aliases
+Cmnd_Alias SYSTEMD = /bin/systemctl daemon-reload, /bin/systemctl enable ancs, /bin/systemctl stop ancs, \
+/bin/systemctl start ancs
+Cmnd_Alias APT = /usr/bin/apt-get install -y python3-dev python3-pip python3-venv
+
+# Gitlab-runner rights
+gitlab-runner ALL=NOPASSWD: SYSTEMD, APT

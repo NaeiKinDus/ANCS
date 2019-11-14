@@ -1,0 +1,22 @@
+[Unit]
+Description=ANCS service
+After=network.target
+
+### @todo use a script that modifies path for (pre)prod and binary distribution
+[Service]
+Type=simple
+User=ancs
+WorkingDirectory=
+### @todo Dev only
+Environment=FLASK_APP=ancs
+Environment=FLASK_CONFIG=prod
+EnvironmentFile=/home/ancs/service.env
+ExecStart=flask run
+Restart=on-failure
+RestartSec=5
+TimeoutSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+Alias=ancs
