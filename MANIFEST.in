@@ -1,0 +1,5 @@
+include ancs.py
+include *.md
+include LICENSE
+recursive-include app *
+global-exclude *.py[cod]
