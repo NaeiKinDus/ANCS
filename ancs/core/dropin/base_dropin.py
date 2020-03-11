@@ -1,24 +1,40 @@
 # -*- coding: utf-8 -*-
 
+from typing import Optional
+
 
 class BaseDropIn(object):
     """
     Base class used by drop-ins.
     """
-    def periodic_call(self, context: dict):
+
+    def periodic_call(self, context: dict = None) -> None:
         """
         Called by the watcher thread, used to perform periodic measurements and increase
         relevant Prometheus counters.
-        """
-        pass
+        This method is optional.
 
-    def handler(self):
         """
-        Exposed as a REST webservice; call that handles queries that match a specific endpoint.
+        print(
+            'NOTICE: Method `periodic_call` is not implemented by {}, no upkeep will be performed'
+            .format(self.identity['id'])
+        )
+
+    def handler(self, context: dict = None) -> Optional[str]:
+        """
+        Exposed as a REST webservice; method that handles queries that match a specific route.
+        This method is optional.
+
+        :param context: an optional context object containing a query's context data
+        :type context: dict
         :return: a json-encoded string that contains the response
         :rtype: str
         """
-        pass
+        print(
+            'NOTICE: Method `handler` is not implemented by {}, no routing available for this drop-in'
+            .format(self.identity['id'])
+        )
+        return None
 
     @property
     def identity(self) -> dict:
@@ -27,4 +43,7 @@ class BaseDropIn(object):
 
         :return:
         """
-        raise NotImplementedError("Please implement the property `identity`")
+        raise NotImplementedError(
+            'Attribute `identity` is required but not implemented by drop-in "{}"'
+            .format(self.identity['id'])
+        )

@@ -36,13 +36,15 @@ class DropIn(BaseI2CDropIn):
 
         super().__init__(bus=current_bus, address=current_address)
 
-    def periodic_call(self, context: dict):
-        """
-        Called by the watcher thread, used to perform periodic measurements and increase
-        relevant Prometheus counters.
-        """
-        self._get_readings()
-        self._update_counters()
+    # def periodic_call(self, context: dict = None):
+    #     """
+    #     Called by the watcher thread, used to perform periodic measurements and increase
+    #     relevant Prometheus counters.
+    #     """
+    #     if not context:
+    #         context = {}
+    #     self._get_readings()
+    #     self._update_counters()
 
     def _get_readings(self):
         print('Getting readings from bme280...')

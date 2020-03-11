@@ -6,7 +6,6 @@ Factory to create and configure a Flask instance
 import os
 from flask import Flask
 from dotenv import load_dotenv
-from ancs.core.background_watcher import background_watcher
 
 
 def create_app(env=None) -> Flask:
@@ -22,7 +21,7 @@ def create_app(env=None) -> Flask:
     secret_key = os.getenv("SECRET_KEY")
     database = os.getenv("ANCS_DATABASE")
 
-    # create and configure the ancs app
+    # create and configure the ANCS app
     app = Flask(__name__, instance_relative_config=True)
 
     if not database:
@@ -57,13 +56,12 @@ def load_drop_ins(app: Flask) -> dict:
     drop_ins: dict = {}
     modules_list = os.listdir('ancs/dropins')
     for module_name in modules_list:
-        if module_name[-3:] != '.py':
+        if module_name[-3:] != '.py' or module_name == '__init__.py':
             continue
 
         try:
             dropin_module = __import__("ancs.dropins." + module_name[:-3], fromlist=["*"])
             drop_in = dropin_module.DropIn()
-            drop_ins[drop_in.identity['id']] = drop_in
         except Exception as excp:
             print("Could not register drop in {}: {}".format(module_name[:-3], str(excp)))
             continue
@@ -75,7 +73,18 @@ def load_drop_ins(app: Flask) -> dict:
                 methods=drop_in.identity['methods']
             )
         except KeyError as excp:
-            print("Invalid identity for module {}: {}".format(module_name[:-3], str(excp)))
+            print(
+                'Invalid `identity` attribute for module {}: {}'
+                .format(module_name[:-3], str(excp))
+            )
             continue
+        except NotImplementedError as excp:
+            print(
+                'No `identity` attribute available for module "{}"'
+                .format(module_name[:-3])
+            )
+            continue
+        else:
+            drop_ins[drop_in.identity['id']] = drop_in
 
     return drop_ins
