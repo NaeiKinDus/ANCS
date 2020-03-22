@@ -4,8 +4,9 @@ Factory to create and configure a Flask instance
 """
 
 import os
-from flask import Flask
 from dotenv import load_dotenv
+from flask import Flask
+import traceback
 
 
 def create_app(env=None) -> Flask:
@@ -19,17 +20,12 @@ def create_app(env=None) -> Flask:
     """
     load_dotenv(override=True)
     secret_key = os.getenv("SECRET_KEY")
-    database = os.getenv("ANCS_DATABASE")
 
     # create and configure the ANCS app
     app = Flask(__name__, instance_relative_config=True)
 
-    if not database:
-        database = os.path.join(app.instance_path, 'ancs.sqlite')
-
     app.config.from_mapping(
         SECRET_KEY=secret_key,
-        DATABASE=database,
         EXECUTOR_PROPAGATE_EXCEPTIONS=True
     )
 
@@ -60,18 +56,19 @@ def load_drop_ins(app: Flask) -> dict:
             continue
 
         try:
-            dropin_module = __import__("ancs.dropins." + module_name[:-3], fromlist=["*"])
-            drop_in = dropin_module.DropIn()
-        except Exception as excp:
-            print("Could not register drop in {}: {}".format(module_name[:-3], str(excp)))
+            drop_in_module = __import__("ancs.dropins." + module_name[:-3], fromlist=["*"])
+            drop_in = drop_in_module.DropIn()
+        except Exception:
+            print("Could not register drop in {}:\n{}".format(module_name[:-3], traceback.format_exc()))
             continue
         try:
-            app.add_url_rule(
-                drop_in.identity['endpoint'],
-                drop_in.identity['rule'],
-                drop_in.identity['handler'],
-                methods=drop_in.identity['methods']
-            )
+            if drop_in.identity['handler']:
+                app.add_url_rule(
+                    drop_in.identity['endpoint'],
+                    drop_in.identity['rule'],
+                    drop_in.identity['handler'],
+                    methods=drop_in.identity['methods']
+                )
         except KeyError as excp:
             print(
                 'Invalid `identity` attribute for module {}: {}'

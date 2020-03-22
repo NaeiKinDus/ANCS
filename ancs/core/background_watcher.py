@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from prometheus_client import Summary, Gauge, Counter
+from prometheus_client import Counter
 from threading import Thread, Event
 
 
@@ -50,5 +50,4 @@ class BackgroundWatcher(Thread):
         Stops the thread using an Event.
         @todo Currently inoperative with Flask / uWSGI.
         """
-        #self._killSwitch.set()
-        pass
+        self._killSwitch.set()
