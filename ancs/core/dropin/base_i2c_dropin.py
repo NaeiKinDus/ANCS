@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from ancs.core.dropin.base_dropin import BaseDropIn
+from copy import copy
 
 
 class BaseI2CDropIn(BaseDropIn):
@@ -10,8 +11,9 @@ class BaseI2CDropIn(BaseDropIn):
 
     _address: int = None
     _bus: int = None
+    _connector: object = None
 
-    def __init__(self, bus: int, address: int) -> None:
+    def __init__(self, bus: int, address: int, connector: object = None) -> None:
         """
         Ctor
 
@@ -20,13 +22,22 @@ class BaseI2CDropIn(BaseDropIn):
         """
         self._bus = bus
         self._address = address
+        self._connector = connector
+
+    @property
+    def connector(self) -> object:
+        return copy(self._connector)
+
+    @connector.setter
+    def connector(self, value: object) -> None:
+        self._connector = copy(value)
 
     @property
     def address(self) -> int:
         return self._address
 
     @address.setter
-    def address(self, value: int):
+    def address(self, value: int) -> None:
         """
         Change I2C address used to talk to the sensor
         @todo: check if it is required to handle deco / reco and cleanup
@@ -47,9 +58,10 @@ class BaseI2CDropIn(BaseDropIn):
         return self._bus
 
     @bus.setter
-    def bus(self, value: int):
+    def bus(self, value: int) -> None:
         """
         Setter for the bus property.
+        @todo: check if it is required to handle deco / reco and cleanup
 
         :param value: New bus value
         :type value: int
