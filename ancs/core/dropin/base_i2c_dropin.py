@@ -18,7 +18,11 @@ class BaseI2CDropIn(BaseDropIn):
         Ctor
 
         :param bus: I2C bus number
+        :type bus: int
         :param address: I2C address number
+        :type address: int
+        :param connector: Callable or object used to communicate with hardware sensors
+        :type connector: object
         """
         self._bus = bus
         self._address = address
@@ -26,10 +30,28 @@ class BaseI2CDropIn(BaseDropIn):
 
     @property
     def connector(self) -> object:
+        """
+        Get the current connector object
+        !!! IMPORTANT !!! Never ever use self.connector in a drop in as this method returns
+            a shallow copy of it to avoid side effects and outside interference.
+
+        :param value: a valid duck-typing connector used by the target DropIn
+        :type value: object
+        :return: a copy of the current connector.
+        :rtype: object
+        """
         return copy(self._connector)
 
     @connector.setter
     def connector(self, value: object) -> None:
+        """
+        Set a new connector object
+        !!! IMPORTANT !!! Never ever use self.connector in a drop in as this method returns
+            a shallow copy of it to avoid side effects and outside interference.
+
+        :param value: a valid duck-typing connector used by the target DropIn
+        :type value: object
+        """
         self._connector = copy(value)
 
     @property

@@ -60,7 +60,7 @@ class DropIn(BaseI2CDropIn):
     def _setup_metrics(self):
         # Setup metrics objects. Should never be called by anything except the # __init__() method.
         self._metrics['state'] = Enum(
-            'drop_in_status',
+            self.DROP_IN_ID + '_drop_in_status',
             'Current status of the drop-in',
             ['drop_in_name'],
             states=['starting', 'ready', 'measuring']
@@ -68,34 +68,34 @@ class DropIn(BaseI2CDropIn):
         self._metrics['state'].labels('bme280').state('starting')
 
         self._metrics['periodic_passes'] = Counter(
-            'measurements_count',
+            self.DROP_IN_ID + '_measurements_count',
             'Number of times periodic measurements were performed',
             ['drop_in_name']
         )
 
         self._metrics['temperature'] = Gauge(
-            'temperature',
+            self.DROP_IN_ID + '_temperature',
             'Temperature (Celsius degrees)',
             ['drop_in_name']
         )
         self._metrics['altitude'] = Gauge(
-            'altitude',
+            self.DROP_IN_ID + '_altitude',
             'Altitude (meters)',
             ['drop_in_name']
         )
         self._metrics['humidity'] = Gauge(
-            'humidity',
+            self.DROP_IN_ID + '_humidity',
             'Humidity (%)',
             ['drop_in_name']
         )
         self._metrics['pressure'] = Gauge(
-            'pressure',
+            self.DROP_IN_ID + '_pressure',
             'Pressure (hPa)',
             ['drop_in_name']
         )
 
         self._metrics['bme280'] = Info(
-            'drop_in',
+            self.DROP_IN_ID + '_drop_in',
             'Information regarding this drop_in',
             ['drop_in_name']
         )
