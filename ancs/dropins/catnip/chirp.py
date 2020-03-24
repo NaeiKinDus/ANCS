@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 """ Class for the Chirp capacitive soil moisture sensor
@@ -15,7 +15,6 @@ https://github.com/JasperWallace/chirp-graphite/blob/master/chirp.py
 https://github.com/Miceuz/i2c-moisture-sensor/blob/master/README.md
 """
 
-from __future__ import division
 from datetime import datetime
 
 import smbus
