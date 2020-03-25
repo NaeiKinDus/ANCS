@@ -8,6 +8,10 @@ class BackgroundWatcher(Thread):
     """
     Thread class used to regularly poll the drop-ins.
     """
+
+    # Time, in seconds, between each run of the watcher
+    REFRESH_FREQUENCY = 10
+
     drop_ins: dict = {}
     _killSwitch: Event = None
 
@@ -43,7 +47,7 @@ class BackgroundWatcher(Thread):
 
             iteration += 1
             c_iter.inc()
-            self._killSwitch.wait(5)
+            self._killSwitch.wait(self.REFRESH_FREQUENCY)
 
     def stop(self) -> None:
         """
