@@ -7,7 +7,7 @@ As of yet it is in an early but working beta if you have the same sensors as my 
 - RaspberryPi 3,
 - [Tentacle T3](https://www.whiteboxes.ch/shop/tentacle-t3-for-raspberry-pi/) for RPi,
 - [Catnip's soil sensor](https://www.whiteboxes.ch/shop/i2c-soil-moisture-sensor/),
-- [a BME280 sensor](),
+- [a BME280 sensor](https://www.adafruit.com/product/2652),
 - [Atlas Scientific EZO pH circuit](https://www.whiteboxes.ch/shop/ezo-ph-circuit/)
 - [Atlas Scientific consumer-grade sensor](https://www.whiteboxes.ch/shop/consumer-grade-ph-probe/).
 
