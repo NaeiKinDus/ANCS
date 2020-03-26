@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from ancs.core.dropin.base_i2c_dropin import BaseI2CDropIn
-from flask import current_app, jsonify, g, request
 from logging import Logger
 from prometheus_client import Gauge, Counter, metrics, Info, Enum
 from typing import Optional, Dict

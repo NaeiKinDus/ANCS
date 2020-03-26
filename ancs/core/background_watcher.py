@@ -17,7 +17,7 @@ class BackgroundWatcher(Thread):
     app: Flask = None
     logger: Logger = None
     drop_ins: dict = {}
-    _killSwitch: Event = None
+    _kill_switch: Event = None
 
     def __init__(self, app: Flask, drop_ins: dict = None, **kwargs) -> None:
         """
@@ -32,7 +32,7 @@ class BackgroundWatcher(Thread):
         if not drop_ins:
             drop_ins = {}
         self.drop_ins = drop_ins
-        self._killSwitch = Event()
+        self._kill_switch = Event()
 
     def run(self) -> None:
         """
@@ -44,7 +44,7 @@ class BackgroundWatcher(Thread):
         """
         iteration = 0
         c_iter = Counter('num_watcher_iter', 'Number of iterations the background watcher performed')
-        while not self._killSwitch.is_set():
+        while not self._kill_switch.is_set():
             self.logger.debug('Starting background watcher cycle...')
             for di_name, di_instance in self.drop_ins.items():
                 self.logger.debug('- running periodic_call for drop-in {} ({})'.format(di_name, type(di_instance)))
@@ -58,11 +58,11 @@ class BackgroundWatcher(Thread):
             iteration += 1
             c_iter.inc()
             self.logger.debug('Success')
-            self._killSwitch.wait(self.REFRESH_FREQUENCY)
+            self._kill_switch.wait(self.REFRESH_FREQUENCY)
 
     def stop(self) -> None:
         """
         Stops the thread using an Event.
         @todo Currently inoperative with Flask / uWSGI.
         """
-        self._killSwitch.set()
+        self._kill_switch.set()

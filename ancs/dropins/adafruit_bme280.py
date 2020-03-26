@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from ancs.core.dropin.base_i2c_dropin import BaseI2CDropIn
-from flask import current_app, jsonify, g, request
 from logging import Logger
 from prometheus_client import Gauge, Counter, metrics, Info, Enum
 from typing import Optional, Dict
@@ -135,12 +134,7 @@ class DropIn(BaseI2CDropIn):
         :return: a json-encoded string that contains the response
         :rtype: str
         """
-        print(request.method)
-        if request.method == 'POST':
-            with current_app.app_context():
-                print(type(g.drop_ins))
-        print('Handler called for bme280...')
-        return jsonify({"message": "wokay"})
+        pass
 
     @property
     def identity(self) -> dict:
