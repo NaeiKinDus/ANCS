@@ -46,7 +46,7 @@ class BaseDropIn(object):
             'method `handler` is not implemented by {}, no routing available for this drop-in'
             .format(self.identity['id'])
         )
-        return None
+        return
 
     @property
     def identity(self) -> dict:
