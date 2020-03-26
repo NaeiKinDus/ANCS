@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from logging import Logger
 from typing import Optional
 
 
@@ -8,6 +9,17 @@ class BaseDropIn(object):
     Base class used by drop-ins.
     """
 
+    logger: Logger
+
+    def __init__(self, logger: Logger) -> None:
+        """
+        Ctor
+
+        :param logger: a logger instance
+        :type logger: Logger
+        """
+        self.logger = logger
+
     def periodic_call(self, context: dict = None) -> None:
         """
         Called by the watcher thread, used to perform periodic measurements and increase
@@ -15,8 +27,8 @@ class BaseDropIn(object):
         This method is optional.
 
         """
-        print(
-            'NOTICE: Method `periodic_call` is not implemented by {}, no upkeep will be performed'
+        self.logger.info(
+            'method `periodic_call` is not implemented by "{}", no upkeep will be performed'
             .format(self.identity['id'])
         )
 
@@ -30,8 +42,8 @@ class BaseDropIn(object):
         :return: a json-encoded string that contains the response
         :rtype: str
         """
-        print(
-            'NOTICE: Method `handler` is not implemented by {}, no routing available for this drop-in'
+        self.logger.info(
+            'method `handler` is not implemented by {}, no routing available for this drop-in'
             .format(self.identity['id'])
         )
         return None

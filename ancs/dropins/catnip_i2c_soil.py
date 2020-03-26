@@ -2,6 +2,7 @@
 
 from ancs.core.dropin.base_i2c_dropin import BaseI2CDropIn
 from flask import current_app, jsonify, g, request
+from logging import Logger
 from prometheus_client import Gauge, Counter, metrics, Info, Enum
 from typing import Optional, Dict
 
@@ -23,7 +24,7 @@ class DropIn(BaseI2CDropIn):
 
     _metrics: Dict[str, metrics.MetricWrapperBase] = {}
 
-    def __init__(self, bus: int = None, address: int = None, connector: object = None):
+    def __init__(self, logger: Logger, bus: int = None, address: int = None, connector: object = None):
         """
         Constructor.
         note: `connector` may be a lambda or function that returns an object that MUST exhibit the
@@ -32,6 +33,8 @@ class DropIn(BaseI2CDropIn):
             the I2C connection parameters.
         @todo Modify the way connectors are handled to allow easier configuration of I2C parameters.
 
+        :param logger: logger instance
+        :type logger: Logger
         :param bus: I2C bus used
         :type bus: int
         :param address: I2C address of the sensor
@@ -49,7 +52,7 @@ class DropIn(BaseI2CDropIn):
             try:
                 from .catnip.chirp import Chirp
             except NotImplementedError:
-                print('Missing python dependencies, please review your setup')
+                logger.warning('Missing python dependencies, please review your setup')
                 raise
             current_connector = Chirp(
                 bus=current_bus,
@@ -57,9 +60,8 @@ class DropIn(BaseI2CDropIn):
                 min_moist=self.CALIBRATED_MIN_MOISTURE,
                 max_moist=self.CALIBRATED_MAX_MOISTURE,
             )
-
+        super().__init__(current_bus, current_address, logger, connector=current_connector)
         self._setup_metrics()
-        super().__init__(bus=current_bus, address=current_address, connector=current_connector)
         self._metrics['state'].labels('soil').state('ready')
 
     def _setup_metrics(self):
@@ -115,6 +117,11 @@ class DropIn(BaseI2CDropIn):
         )
 
     def periodic_call(self, context: dict = None):
+        """
+                Called by the watcher thread, used to perform periodic measurements and increase
+                relevant Prometheus counters.
+                """
+        self.logger.debug('running periodic upkeep for {}'.format(self.DROP_IN_ID))
         self._metrics['state'].labels('soil').state('measuring')
 
         self._metrics['periodic_passes'].labels('soil').inc()
@@ -127,6 +134,7 @@ class DropIn(BaseI2CDropIn):
         self._metrics['brightness'].labels('soil').set(self._connector.light)
 
         self._metrics['state'].labels('soil').state('ready')
+        self.logger.debug('periodic upkeep succeeded')
 
     def handler(self, context: dict = None) -> Optional[str]:
         pass

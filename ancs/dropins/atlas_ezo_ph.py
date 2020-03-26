@@ -2,6 +2,7 @@
 
 from ancs.core.dropin.base_i2c_dropin import BaseI2CDropIn
 from flask import current_app, jsonify, g, request
+from logging import Logger
 from prometheus_client import Gauge, Counter, metrics, Info, Enum
 from typing import Optional, Dict, Tuple, List
 
@@ -83,7 +84,7 @@ class DropIn(BaseI2CDropIn):
 
             return (succeeded, value)
 
-    def __init__(self, bus: int = None, address: int = None, connector: object = None) -> None:
+    def __init__(self, logger: Logger, bus: int = None, address: int = None, connector: object = None) -> None:
         """
         Constructor.
         note: `connector` may be a lambda or function that returns an object that MUST exhibit the
@@ -92,6 +93,8 @@ class DropIn(BaseI2CDropIn):
             the I2C connection parameters.
         @todo Modify the way connectors are handled to allow easier configuration of I2C parameters.
 
+        :param logger: logger instance
+        :type logger: Logger
         :param bus: I2C bus used
         :type bus: int
         :param address: I2C address of the sensor
@@ -112,18 +115,18 @@ class DropIn(BaseI2CDropIn):
                     bus=current_bus,
                     moduletype=self.SENSOR_TYPE
                 )
-            except BaseException:
-                print('Could not instantiate default connector')
+            except BaseException as excp:
+                logger.warning('Could not instantiate default connector (AtlasI2C): {}'.format(excp))
                 raise
             try:
                 response = current_connector.query('I')
                 dev_name = response.split(',')[1]
                 current_connector._name = dev_name
-            except BaseException:
-                print('Could not query sensor for its name')
+            except BaseException as excp:
+                logger.warning('Could not query sensor for its name: {}'.format(excp))
                 raise
 
-        super().__init__(bus=current_bus, address=current_address, connector=DropIn.PHWrapper(current_connector))
+        super().__init__(current_bus, current_address, logger, connector=DropIn.PHWrapper(current_connector))
         self._setup_metrics()
         self._metrics['state'].labels('ph').state('ready')
 
@@ -170,12 +173,18 @@ class DropIn(BaseI2CDropIn):
         )
 
     def periodic_call(self, context: dict = None) -> None:
+        """
+                Called by the watcher thread, used to perform periodic measurements and increase
+                relevant Prometheus counters.
+                """
+        self.logger.debug('running periodic upkeep for {}'.format(self.DROP_IN_ID))
         self._metrics['state'].labels('ph').state('measuring')
 
         self._metrics['periodic_passes'].labels('ph').inc()
         self._metrics['ph'].labels('ph').set(round(self._connector.ph, 2))
 
         self._metrics['state'].labels('ph').state('ready')
+        self.logger.debug('periodic upkeep succeeded')
 
     def handler(self, context: dict = None) -> Optional[str]:
         pass
