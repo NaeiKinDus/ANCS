@@ -2,6 +2,7 @@
 
 from ancs.core.dropin.base_dropin import BaseDropIn
 from copy import copy
+from logging import Logger
 
 
 class BaseI2CDropIn(BaseDropIn):
@@ -13,7 +14,7 @@ class BaseI2CDropIn(BaseDropIn):
     _bus: int = None
     _connector: object = None
 
-    def __init__(self, bus: int, address: int, connector: object = None) -> None:
+    def __init__(self, bus: int, address: int, logger: Logger, connector: object = None) -> None:
         """
         Ctor
 
@@ -24,6 +25,7 @@ class BaseI2CDropIn(BaseDropIn):
         :param connector: Callable or object used to communicate with hardware sensors
         :type connector: object
         """
+        super().__init__(logger)
         self._bus = bus
         self._address = address
         self._connector = connector

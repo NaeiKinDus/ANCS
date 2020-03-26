@@ -15,13 +15,13 @@ drop_ins = load_drop_ins(ancs_app)
 
 # Start watcher thread
 try:
-    thd = BackgroundWatcher(drop_ins)
+    thd = BackgroundWatcher(ancs_app, drop_ins)
     thd.start()
     atexit.register(lambda: thd.stop())
-except:
-    print("~~~~~~ Could not start thread ! ~~~~~~")
+except BaseException as excp:
+    ancs_app.logger.error('could not start background watcher, aborting ! Reason: {}'.format(excp))
 else:
-    print("~~~~~~ Properly started thread ! ~~~~~~")
+    ancs_app.logger.debug('started background watcher, frequency = {}'.format(BackgroundWatcher.REFRESH_FREQUENCY))
 
 # @todo signals setup not working ATM, must look at Flask / UWSGI doc.
 # Setting up signal trapping for a clean exit
@@ -29,7 +29,7 @@ signal.signal(signal.SIGHUP, lambda: thd.stop())
 signal.signal(signal.SIGTERM, lambda: thd.stop())
 signal.signal(signal.SIGINT, lambda: thd.stop())
 
-print('Initialization ended.')
+ancs_app.logger.info('initialization ended successfully')
 
 # add Prometheus entry point for metrics
 app = DispatcherMiddleware(
