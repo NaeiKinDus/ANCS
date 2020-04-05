@@ -11,8 +11,10 @@ class BackgroundWatcher(Thread):
     Thread class used to regularly poll the drop-ins.
     """
 
-    # Time, in seconds, between each run of the watcher
+    # Time between each run of the watcher, in seconds
     REFRESH_FREQUENCY = 10
+    # Time before the first periodic call is performed, in seconds
+    DELAY_BEFORE_ACTIVATION = 10
 
     app: Flask = None
     logger: Logger = None
@@ -44,6 +46,7 @@ class BackgroundWatcher(Thread):
         """
         iteration = 0
         c_iter = Counter('num_watcher_iter', 'Number of iterations the background watcher performed')
+        self._kill_switch.wait(self.DELAY_BEFORE_ACTIVATION)
         while not self._kill_switch.is_set():
             self.logger.debug('Starting background watcher cycle...')
             for di_name, di_instance in self.drop_ins.items():

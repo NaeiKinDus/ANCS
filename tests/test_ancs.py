@@ -1,7 +1,7 @@
 import os
 import tempfile
 import pytest
-from ancs import ancs
+import ancs
 
 
 @pytest.fixture()

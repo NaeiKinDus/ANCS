@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ancs.core.dropin.base_dropin import BaseDropIn
+from app.core.dropin.base_dropin import BaseDropIn
 from copy import copy
 from logging import Logger
 

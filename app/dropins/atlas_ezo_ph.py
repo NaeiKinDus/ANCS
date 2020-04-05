@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ancs.core.dropin.base_i2c_dropin import BaseI2CDropIn
+from app.core.dropin.base_i2c_dropin import BaseI2CDropIn
 from logging import Logger
 from prometheus_client import Gauge, Counter, metrics, Info, Enum
 from typing import Optional, Dict, Tuple, List
@@ -18,6 +18,7 @@ class DropIn(BaseI2CDropIn):
     FLASK_ROUTING_RULE: str = 'ph'
     HANDLED_METHODS: tuple = ('GET', 'POST')
     SENSOR_TYPE: str = 'pH'
+    DEFAULT_ERROR_VALUE = -99.0
 
     _metrics: Dict[str, metrics.MetricWrapperBase] = {}
 
@@ -41,7 +42,8 @@ class DropIn(BaseI2CDropIn):
             """
             response = self._connector.query('R')
             status_ok, value = self.parse_response(response)
-            value = float(value[0])
+            if value[0]:
+                value = float(value[0])
 
             return value if status_ok else None
 
@@ -56,7 +58,8 @@ class DropIn(BaseI2CDropIn):
             """
             return self.parse_response(self._connector.query(command))
 
-        def parse_response(self, str_resp: str) -> Tuple[bool, List[str]]:
+        @staticmethod
+        def parse_response(str_resp: str) -> Tuple[bool, List[str]]:
             """
             Parse the given string, detects if the call succeeded and returns the sanitized interesting part
             as an array of strings.
@@ -81,7 +84,7 @@ class DropIn(BaseI2CDropIn):
             except BaseException as excp:
                 raise ValueError('"{}" is not a valid string') from excp
 
-            return (succeeded, value)
+            return succeeded, value
 
     def __init__(self, logger: Logger, bus: int = None, address: int = None, connector: object = None) -> None:
         """
@@ -119,11 +122,14 @@ class DropIn(BaseI2CDropIn):
                 raise
             try:
                 response = current_connector.query('I')
+            except Exception as excp:
+                logger.warning('Could not query sensor: {}'.format(excp))
+                raise
+            try:
                 dev_name = response.split(',')[1]
                 current_connector._name = dev_name
-            except BaseException as excp:
-                logger.warning('Could not query sensor for its name: {}'.format(excp))
-                raise
+            except IndexError:
+                logger.warning('Invalid board name returned, unspecified behaviour')
 
         super().__init__(current_bus, current_address, logger, connector=DropIn.PHWrapper(current_connector))
         self._setup_metrics()
@@ -180,7 +186,12 @@ class DropIn(BaseI2CDropIn):
         self._metrics['state'].labels('ph').state('measuring')
 
         self._metrics['periodic_passes'].labels('ph').inc()
-        self._metrics['ph'].labels('ph').set(round(self._connector.ph, 2))
+        current_ph = self._connector.ph
+        if current_ph:
+            current_ph = round(current_ph, 2)
+        else:
+            current_ph = -99.9
+        self._metrics['ph'].labels('ph').set(current_ph)
 
         self._metrics['state'].labels('ph').state('ready')
         self.logger.debug('periodic upkeep succeeded')
