@@ -5,6 +5,7 @@ Factory to create and configure a Flask instance
 
 from dotenv import load_dotenv
 from flask import Flask
+from inspect import stack
 from logging.config import dictConfig
 from logging import Logger
 import os
@@ -77,11 +78,11 @@ def load_drop_ins(app: Flask) -> dict:
     logger = app.logger
     logger.debug('loading drop-ins...')
     drop_ins: dict = {}
-    for module_name in list_modules('ancs/dropins', logger):
+    for module_name in list_modules(logger):
         logger.debug('processing module "{}"'.format(module_name))
 
         try:
-            drop_in_module = __import__("ancs.dropins." + module_name, fromlist=["*"])
+            drop_in_module = __import__("app.dropins." + module_name, fromlist=["*"])
             drop_in = drop_in_module.DropIn(logger)
             logger.info('loaded drop-in {}'.format(module_name))
         except Exception:
@@ -118,7 +119,7 @@ def load_drop_ins(app: Flask) -> dict:
     return drop_ins
 
 
-def list_modules(path: str, logger: Logger) -> Iterable[str]:
+def list_modules(logger: Logger) -> Iterable[str]:
     """
     Lists all loadable modules and yield them.
 
@@ -126,9 +127,10 @@ def list_modules(path: str, logger: Logger) -> Iterable[str]:
     :type path: str
     :return: Iterable[str]
     """
-    for file in os.listdir(path):
+    drop_ins_path = os.path.dirname(os.path.abspath(stack()[0][1])) + '/dropins'
+    for file in os.listdir(drop_ins_path):
         logger.debug('checking drop-in candidate "{}"'.format(file))
-        if os.path.isfile(os.path.join(path, file)):
+        if os.path.isfile(os.path.join(drop_ins_path, file)):
             purged_name = file[:file.rindex('.')]
             extension = file[file.rindex('.') + 1:]
             if extension != 'py':

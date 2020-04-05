@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ancs.core.dropin.base_i2c_dropin import BaseI2CDropIn
+from app.core.dropin.base_i2c_dropin import BaseI2CDropIn
 from logging import Logger
 from prometheus_client import Gauge, Counter, metrics, Info, Enum
 from typing import Optional, Dict
@@ -8,18 +8,14 @@ from typing import Optional, Dict
 
 class DropIn(BaseI2CDropIn):
     """
-    Drop-in to use Catnip's soil moisture sensor using I2C.
+    Drop-in to use Adafruit's BME280 sensor using I2C.
     """
-    DEFAULT_ADDRESS: int = 0x20  # dec: 32
+    DEFAULT_ADDRESS: int = 0x77  # dec: 119
     DEFAULT_BUS: int = 1
     DROP_IN_VERSION: str = '0.0.1'
-    DROP_IN_ID: str = 'catnip_soil'
-    FLASK_ROUTING_RULE: str = 'soil'
-    HANDLED_METHODS: tuple = ('GET', 'POST')
-    # The values below should reflect your specific device state, perform a calibration
-    # if needed beforehand.
-    CALIBRATED_MIN_MOISTURE: int = 221
-    CALIBRATED_MAX_MOISTURE: int = 614
+    DROP_IN_ID: str = 'adafruit_bme280'
+    FLASK_ROUTING_RULE: str = 'bme280'
+    HANDLED_METHODS = ('GET', 'POST')
 
     _metrics: Dict[str, metrics.MetricWrapperBase] = {}
 
@@ -27,7 +23,7 @@ class DropIn(BaseI2CDropIn):
         """
         Constructor.
         note: `connector` may be a lambda or function that returns an object that MUST exhibit the
-            same properties as `.catnip.chirp.chirp()` for full compatibility. The
+            same properties as adafruit_bme280.Adafruit_BME280_I2C() for full compatibility. The
             function will be provided with two positional parameters, `bus` and `address`, corresponding to
             the I2C connection parameters.
         @todo Modify the way connectors are handled to allow easier configuration of I2C parameters.
@@ -49,28 +45,28 @@ class DropIn(BaseI2CDropIn):
             current_connector = connector(bus=current_bus, address=current_address)
         else:
             try:
-                from .catnip.chirp import Chirp
+                from adafruit_bme280 import Adafruit_BME280_I2C
+                import board
+                import busio
             except NotImplementedError:
-                logger.warning('Missing python dependencies, please review your setup')
+                logger.error('Missing python dependencies, please review your setup')
                 raise
-            current_connector = Chirp(
-                bus=current_bus,
-                address=current_address,
-                min_moist=self.CALIBRATED_MIN_MOISTURE,
-                max_moist=self.CALIBRATED_MAX_MOISTURE,
-            )
+
+            i2c_setup = busio.I2C(board.SCL, board.SDA)
+            current_connector = Adafruit_BME280_I2C(i2c_setup)
         super().__init__(current_bus, current_address, logger, connector=current_connector)
         self._setup_metrics()
-        self._metrics['state'].labels('soil').state('ready')
+        self._metrics['state'].labels('bme280').state('ready')
 
     def _setup_metrics(self):
+        # Setup metrics objects. Should never be called by anything except the # __init__() method.
         self._metrics['state'] = Enum(
             self.DROP_IN_ID + '_drop_in_status',
             'Current status of the drop-in',
             ['drop_in_name'],
             states=['starting', 'ready', 'measuring']
         )
-        self._metrics['state'].labels('soil').state('starting')
+        self._metrics['state'].labels('bme280').state('starting')
 
         self._metrics['periodic_passes'] = Counter(
             self.DROP_IN_ID + '_measurements_count',
@@ -83,63 +79,71 @@ class DropIn(BaseI2CDropIn):
             'Temperature (Celsius degrees)',
             ['drop_in_name']
         )
-        self._metrics['capacitance'] = Gauge(
-            self.DROP_IN_ID + '_capacitance',
-            # see https://github.com/Miceuz/i2c-moisture-sensor/issues/27#issuecomment-434716035
-            'Capacitance value (arbitrary unit)',
+        self._metrics['altitude'] = Gauge(
+            self.DROP_IN_ID + '_altitude',
+            'Altitude (meters)',
             ['drop_in_name']
         )
-        self._metrics['moisture'] = Gauge(
-            self.DROP_IN_ID + '_moisture',
-            'Moisture (%)',
+        self._metrics['humidity'] = Gauge(
+            self.DROP_IN_ID + '_humidity',
+            'Humidity (%)',
             ['drop_in_name']
         )
-        self._metrics['brightness'] = Gauge(
-            self.DROP_IN_ID + '_brightness',
-            # see https://www.tindie.com/products/miceuz/i2c-soil-moisture-sensor/ - #Rugged Version
-            'Brightness (arbitrary unit)',
+        self._metrics['pressure'] = Gauge(
+            self.DROP_IN_ID + '_pressure',
+            'Pressure (hPa)',
             ['drop_in_name']
         )
 
-        self._metrics['soil'] = Info(
+        self._metrics['bme280'] = Info(
             self.DROP_IN_ID + '_drop_in',
             'Information regarding this drop_in',
             ['drop_in_name']
         )
-        self._metrics['soil'].labels('soil').info(
+        self._metrics['bme280'].labels('bme280').info(
             {
                 'version': self.DROP_IN_VERSION,
                 'id': self.DROP_IN_ID,
                 'rule': self.FLASK_ROUTING_RULE,
-                'capabilities': 'temperature, capacitance, brightness, moisture'
+                'capabilities': 'temperature, altitude, humidity, pressure'
             }
         )
 
-    def periodic_call(self, context: dict = None):
+    def periodic_call(self, context: dict = None) -> None:
         """
-                Called by the watcher thread, used to perform periodic measurements and increase
-                relevant Prometheus counters.
-                """
+        Called by the watcher thread, used to perform periodic measurements and increase
+        relevant Prometheus counters.
+        """
         self.logger.debug('running periodic upkeep for {}'.format(self.DROP_IN_ID))
-        self._metrics['state'].labels('soil').state('measuring')
+        self._metrics['state'].labels('bme280').state('measuring')
 
-        self._metrics['periodic_passes'].labels('soil').inc()
-        # Perform readings
-        self._connector.trigger()
+        self._metrics['periodic_passes'].labels('bme280').inc()
+        self._metrics['temperature'].labels('bme280').set(round(self._connector.temperature, 1))
+        self._metrics['humidity'].labels('bme280').set(round(self._connector.humidity))
+        self._metrics['pressure'].labels('bme280').set(round(self._connector.pressure))
+        self._metrics['altitude'].labels('bme280').set(round(self._connector.altitude))
 
-        self._metrics['temperature'].labels('soil').set(self._connector.temp)
-        self._metrics['capacitance'].labels('soil').set(self._connector.moist)
-        self._metrics['moisture'].labels('soil').set(self._connector.moist_percent)
-        self._metrics['brightness'].labels('soil').set(self._connector.light)
-
-        self._metrics['state'].labels('soil').state('ready')
+        self._metrics['state'].labels('bme280').state('ready')
         self.logger.debug('periodic upkeep succeeded')
 
     def handler(self, context: dict = None) -> Optional[str]:
+        """
+        Exposed as a REST webservice; call that handles queries that match a specific endpoint.
+        :param context: an optional context object containing a query's context data
+        :type context: dict
+        :return: a json-encoded string that contains the response
+        :rtype: str
+        """
         pass
 
     @property
     def identity(self) -> dict:
+        """
+        Property returning a dictionary used to register drop-ins and their end point(s).
+
+        :return: identity dict for this drop-in
+        :rtype: dict
+        """
         return {
             'id': self.DROP_IN_ID,
             'rule': self.FLASK_ROUTING_RULE,
