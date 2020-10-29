@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from app import create_app, load_drop_ins
+from app import create_app
 from app.core.background_watcher import BackgroundWatcher
 import atexit
 from os import getenv
@@ -10,7 +10,12 @@ from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 
 app = create_app(getenv('FLASK_ENV', "development"))
-drop_ins = load_drop_ins(app)
+
+from app.dropins import loaded_drop_ins
+drop_ins = loaded_drop_ins
+
+from app.api.module import api
+api.init_app(app)
 
 # Start watcher thread
 try:
@@ -22,12 +27,13 @@ except BaseException as excp:
 else:
     app.logger.debug('started background watcher, frequency = {}'.format(BackgroundWatcher.REFRESH_FREQUENCY))
 
-app.logger.info('initialization ended successfully')
 
-# add Prometheus entry point for metrics
+# add Prometheus and REST entry points
 app.wsgi_app = DispatcherMiddleware(
     app.wsgi_app,
     {
         '/metrics': make_wsgi_app()
     }
 )
+
+app.logger.info('initialization ended successfully')
