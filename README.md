@@ -14,7 +14,7 @@ As of yet it is in an early but working beta if you have the same sensors as my 
 > Disclaimer
 >
 > This list is given so you can compare what you have to what's implemented, I am in no way affiliated to
-this particular shop (I just like being able to order everything I need on a single webshop, and they offer the T3).
+> this particular shop (I just like being able to order everything I need on a single webshop, and they offer the T3).
 
 The documentation is currently not my point of focus but it will get better in time.
 
