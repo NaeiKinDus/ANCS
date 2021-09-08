@@ -25,7 +25,7 @@ flake8-pytest-style==0.6.0
 flake8-return==1.1.1
 flake8-rst-docstrings==0.0.14
 Flask==1.1.2
-flask-restx==0.2.0
+flask-restx==0.5.1
 httplib2==0.19.0
 icalendar==4.0.7
 idna==2.10
