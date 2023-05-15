@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
 
 from app.core.dropin.base_i2c_dropin import BaseI2CDropIn
-from logging import Logger
+from .atlas.api_schemas import I2CDeviceSchema, CalibrationSchema
+from flask import request
+from flask_restx import Resource, Namespace
+from http import HTTPStatus
+from logging import Logger, getLogger
 from prometheus_client import Gauge, Counter, metrics, Info, Enum
 from typing import Optional, Dict, Tuple, List
+
+
+api_namespace = Namespace("pH", description="Available operations for Atlas EZO pH sensor")
+
+# for name, model in api_models.items():
+#     api_namespace.model()
 
 
 class DropIn(BaseI2CDropIn):
@@ -45,16 +55,27 @@ class DropIn(BaseI2CDropIn):
             error_code, response = self._connector.query('R')
             return float(response) if not error_code else None
 
-        def query(self, command: str) -> Tuple[bool, List[str]]:
+        def query(self, command: str) -> Optional[Tuple[int, Optional[str]]]:
             """
             Perform a query and parse the return.
 
             :param command: a string containing a valid command query.
             :type command: str
             :return: the parsed result
-            :rtype: Tuple[bool, List[str]]
+            :rtype: Optional[Tuple[int, Optional[str]]]
             """
             return self._connector.query(command)
+
+    def query(self, command: str) -> Optional[Tuple[int, Optional[str]]]:
+        """
+        Perform a query and parse the return.
+
+        :param command: a string containing a valid command query.
+        :type command: str
+        :return: the parsed result
+        :rtype: Optional[Tuple[int, Optional[str]]]
+        """
+        return self._connector.query(command)
 
     def __init__(self, logger: Logger, bus: int = None, address: int = None, connector: object = None) -> None:
         """
@@ -110,10 +131,8 @@ class DropIn(BaseI2CDropIn):
                 logger.warning('Invalid board name returned, unspecified behaviour')
 
         super().__init__(current_bus, current_address, logger, connector=DropIn.PHWrapper(current_connector))
-        self._setup_metrics()
-        self._metrics['state'].labels('ph').state('ready')
 
-    def _setup_metrics(self):
+    def setup_metrics(self):
         # List of supported commands: https://www.atlas-scientific.com/_files/_datasheets/_circuit/pH_EZO_datasheet.pdf
         self._metrics['state'] = Enum(
             self.DROP_IN_ID + '_drop_in_status',
@@ -149,6 +168,7 @@ class DropIn(BaseI2CDropIn):
                 'capabilities': 'ph, settings, api'
             }
         )
+        self._metrics['state'].labels('ph').state('ready')
 
     def periodic_call(self, context: dict = None) -> None:
         """
@@ -176,3 +196,103 @@ class DropIn(BaseI2CDropIn):
             'version': self.DROP_IN_VERSION,
             'firmware': self.sensor_firmware
         }
+
+
+@api_namespace.route('/device')
+class Device(Resource):
+    @classmethod
+    def get(cls):
+        logger = getLogger()
+        device = DropIn(logger=logger)
+        dev_response = device.query('I')
+
+        try:
+            _, dev_type, firmware = dev_response[1].split(',')
+        except (ValueError, AttributeError):
+            _, dev_type, firmware = (None, 'N/A', 'N/A')
+
+        return {
+            'status': 200,
+            'result': {
+                'ret_code': int(dev_response[0]),
+                'raw': dev_response[1],
+                'device_type': dev_type,
+                'firmware_version': firmware
+            }
+        }, 200
+
+
+@api_namespace.route('/calibration')
+class Calibration(Resource):
+    @classmethod
+    def get(cls):
+        logger = getLogger()
+        device = DropIn(logger=logger)
+        dev_response = device.query('Cal,?')
+
+        cal_points = None
+        try:
+            cal_points = int(dev_response[1][-1:])
+        except TypeError:
+            pass
+
+        response = {
+            'status': 200,
+            'result': {
+                'ret_code': int(dev_response[0]),
+                'raw': dev_response[1],
+                'is_calibrated': False if dev_response[1] == '?CAL,0' else True,
+                'cal_points': cal_points
+            }
+        }
+
+        return response, 200
+
+    @classmethod
+    def post(cls):
+        """
+        Create a calibration point.
+        :return:
+        """
+        logger = getLogger()
+        device = DropIn(logger=logger)
+
+        pass
+
+
+@api_namespace.route('/calibration/data')
+class CalibrationData(Resource):
+    @classmethod
+    def get(cls):
+        logger = getLogger()
+        device = DropIn(logger=logger)
+        export_query = device.query('Export,?')
+        _, lines_count, bytes_count = export_query[1].split(',')
+        lines_count = int(lines_count)
+        bytes_count = int(bytes_count)
+
+        export_data = ''
+        for i in range(1, lines_count + 1):
+            export_query = device.query('export')
+            export_data += export_query[1]
+
+        return {
+            'status': 200,
+            'result': {
+                'ret_code': 0,
+                'raw': export_data,
+                'lines_count': lines_count,
+                'bytes_count': bytes_count
+            }
+        }
+
+    @classmethod
+    def put(cls):
+        """
+        Import calibration data
+        :return:
+        """
+        logger = getLogger()
+        device = DropIn(logger=logger)
+
+        pass

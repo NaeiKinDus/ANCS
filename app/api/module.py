@@ -16,4 +16,4 @@ api = Api(
 logger = getLogger()
 api_modules = api_drop_ins
 for module_id, api_namespace in api_modules.items():
-    api.add_namespace(api_namespace, path="/{}".format(module_id))
+    api.add_namespace(api_namespace, path="/api/{}".format(module_id))

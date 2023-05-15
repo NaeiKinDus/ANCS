@@ -1,4 +1,6 @@
 include ancs.py
+include wsgi.py
+include uwsgi.ini
 include *.md
 include LICENSE
 recursive-include app *

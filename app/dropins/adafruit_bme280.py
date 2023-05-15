@@ -55,10 +55,8 @@ class DropIn(BaseI2CDropIn):
             i2c_setup = busio.I2C(board.SCL, board.SDA)
             current_connector = Adafruit_BME280_I2C(i2c_setup)
         super().__init__(current_bus, current_address, logger, connector=current_connector)
-        self._setup_metrics()
-        self._metrics['state'].labels('bme280').state('ready')
 
-    def _setup_metrics(self):
+    def setup_metrics(self):
         # Setup metrics objects. Should never be called by anything except the # __init__() method.
         self._metrics['state'] = Enum(
             self.DROP_IN_ID + '_drop_in_status',
@@ -108,6 +106,7 @@ class DropIn(BaseI2CDropIn):
                 'capabilities': 'temperature, altitude, humidity, pressure'
             }
         )
+        self._metrics['state'].labels('bme280').state('ready')
 
     def periodic_call(self, context: dict = None) -> None:
         """

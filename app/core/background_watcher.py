@@ -4,9 +4,10 @@ from flask import Flask
 from logging import Logger
 from prometheus_client import Counter
 from threading import Thread, Event
+from app.core.helper.singleton import Singleton
 
 
-class BackgroundWatcher(Thread):
+class BackgroundWatcher(Thread, metaclass=Singleton):
     """
     Thread class used to regularly poll the drop-ins.
     """

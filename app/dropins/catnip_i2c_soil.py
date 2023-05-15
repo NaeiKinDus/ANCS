@@ -60,10 +60,8 @@ class DropIn(BaseI2CDropIn):
                 max_moist=self.CALIBRATED_MAX_MOISTURE,
             )
         super().__init__(current_bus, current_address, logger, connector=current_connector)
-        self._setup_metrics()
-        self._metrics['state'].labels('soil').state('ready')
 
-    def _setup_metrics(self):
+    def setup_metrics(self):
         self._metrics['state'] = Enum(
             self.DROP_IN_ID + '_drop_in_status',
             'Current status of the drop-in',
@@ -114,6 +112,7 @@ class DropIn(BaseI2CDropIn):
                 'capabilities': 'temperature, capacitance, brightness, moisture'
             }
         )
+        self._metrics['state'].labels('soil').state('ready')
 
     def periodic_call(self, context: dict = None):
         """

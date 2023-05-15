@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from flask import Flask
 from inspect import stack
 from logging import Logger, getLogger
 import os
@@ -27,6 +26,7 @@ def load_drop_ins() -> Tuple[dict, dict]:
             drop_in_module = __import__("app.dropins." + module_name, fromlist=["*"])
             drop_in = drop_in_module.DropIn(logger)
             module_id = drop_in.identity['id']
+            drop_in.setup_metrics()
             logger.info('loaded drop-in {}'.format(module_name))
         except Exception:
             logger.error("could not register drop in {}:\n{}".format(module_name, traceback.format_exc()))

@@ -1,7 +1,6 @@
 ![GitHub](https://img.shields.io/github/license/NaeiKinDus/ANCS?style=plastic)
 #### ANCS
-**A**bsolutely **N**o **C**limate **S**cepticism, **ANCS** for the lazy ones like myself, is a small-ish software used
-to monitor climate variables when home-growing vegetables and plants.
+Software used to monitor climate variables when growing vegetables and plants.
 
 As of yet it is in an early but working beta if you have the same sensors as my own setup, which consists of:
 - RaspberryPi 3,
@@ -14,7 +13,7 @@ As of yet it is in an early but working beta if you have the same sensors as my 
 > Disclaimer
 >
 > This list is given so you can compare what you have to what's implemented, I am in no way affiliated to
-> this particular shop (I just like being able to order everything I need on a single webshop, and they offer the T3).
+this particular shop (I just like being able to order everything I need on a single webshop, and they offer the T3).
 
 The documentation is currently not my point of focus but it will get better in time.
 
@@ -28,12 +27,17 @@ Prometheus is then queried by [Grafana](https://grafana.com/) which in turns dis
 ![](docs/grafana_dashboard.png)
 
 
-#### Installation
+## Installation
+### Requirements
+Tested on Python 3.7.3.
+Latest pip version.
+Rustc >= 1.48
+
 > WARNING
 >
 > Under construction, more will come later.
 
 If you can find your way around this yourself, install python3, all required dependencies, and fire uWSGI like so:
-`uwsgi --http 0.0.0.0:8000 --enable-threads --wsgi-file ancs/ancs.py --callable app`
+`LOG_LEVEL=DEBUG uwsgi uwsgi.ini`
 
 The `--enable-threads` is mandatory, else the background watcher will not start.
