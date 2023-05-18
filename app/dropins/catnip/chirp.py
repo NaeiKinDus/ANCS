@@ -1,22 +1,12 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 """ Class for the Chirp capacitive soil moisture sensor
     made by Catnip Electronics, Albertas Mickėnas
 
-Links to Chirp:
-https://github.com/Miceuz/i2c-moisture-sensor
-https://www.tindie.com/products/miceuz/i2c-soil-moisture-sensor/
-
-Python Class by Göran Lundberg. https://github.com/ageir/chirp
-
 Based on code by Jasper Wallace and Daniel Tamm
 https://github.com/JasperWallace/chirp-graphite/blob/master/chirp.py
-https://github.com/Miceuz/i2c-moisture-sensor/blob/master/README.md
 """
-
 from datetime import datetime
-
 import smbus
 import sys
 import time
@@ -46,7 +36,7 @@ class Chirp(object):
     def __init__(self, bus=1, address=0x20, min_moist=False, max_moist=False,
                  temp_scale='celsius', temp_offset=0, read_temp=True,
                  read_moist=True, read_light=True):
-        """Chir soil moisture sensor.
+        """Chirp soil moisture sensor.
 
         Args:
             bus (int, optional): I2C bus. Default: 1
@@ -383,7 +373,7 @@ if __name__ == "__main__":
     # Check which temperature sign to use.
     if chirp.temp_scale == 'celsius':
         scale_sign = '°C'
-    elif chirp.temp_scale == 'farenheit':
+    elif chirp.temp_scale == 'fahrenheit':
         scale_sign = '°F'
     elif chirp.temp_scale == 'kelvin':
         scale_sign = 'K'
