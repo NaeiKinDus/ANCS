@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import os
+from os import getenv, environ
 
 try:
-    import pydevd_pycharm
-    pydevd_pycharm.settrace(
-        os.environ.get("PYDEV_TRACE_ALLOWED_IP", '0.0.0.0'),
-        port=os.environ.get("PYDEV_TRACE_PORT", 9090),
-        stdoutToServer=True,
-        stderrToServer=True
-    )
-except ModuleNotFoundError:
+    if environ.get("FLASK_ENV") == "development":
+        import pydevd_pycharm
+        pydevd_pycharm.settrace(
+            environ.get("PYDEV_TRACE_ALLOWED_IP", '0.0.0.0'),
+            port=environ.get("PYDEV_TRACE_PORT", 9090),
+            stdoutToServer=True,
+            stderrToServer=True
+        )
+except:
     pass
 
 from app import create_app
 from app.core.background_watcher import BackgroundWatcher
 import atexit
-from os import getenv
 from prometheus_client import make_wsgi_app
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
@@ -24,7 +24,7 @@ app = create_app(getenv('FLASK_ENV', "development"))
 app.logger.info("App created !")
 
 # Avoids double initialization when starting the app with flask in debug mode
-if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+if not app.debug or environ.get("WERKZEUG_RUN_MAIN") == "true":
     # Load available drop-ins
     from app.dropins import loaded_drop_ins
     drop_ins = loaded_drop_ins
