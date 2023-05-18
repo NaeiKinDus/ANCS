@@ -17,8 +17,8 @@ def main():
         description="Home garden climate control",
         long_description=long_description,
         long_description_content_type="text/markdown",
-        url="https://gitlab.0x2a.ninja/iot/ancs",
-        packages=setuptools.find_packages(exclude=['tests']),
+        url="https://www.github.com/naeikindus/ancs",
+        packages=setuptools.find_packages(),
         classifiers=[
             "Framework :: Flask"
             "Environment :: No Input/Output (Daemon)",
@@ -29,7 +29,7 @@ def main():
             "Intended Audience :: Other Audience",
             "Topic :: Home Automation",
         ],
-        python_requires='>=3.7',
+        python_requires='>=3.9',
         include_package_data=True,
         zip_safe=False,
     )
