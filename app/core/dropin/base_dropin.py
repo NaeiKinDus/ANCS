@@ -9,8 +9,6 @@ class BaseDropIn(object):
     Base class used by drop-ins.
     """
 
-    logger: Logger
-
     def __init__(self, logger: Logger) -> None:
         """
         Ctor

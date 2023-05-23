@@ -2,6 +2,7 @@
 from inspect import stack
 from logging import Logger, getLogger
 import os
+import sys
 import traceback
 from typing import Iterable, Tuple
 
@@ -81,5 +82,8 @@ def list_modules(logger: Logger) -> Iterable[str]:
             logger.debug('-> not a file')
             continue
 
-
-loaded_drop_ins, api_drop_ins = load_drop_ins()
+# Disable dropins discovery when running the test suites
+if hasattr(sys, "__pytest_running__"):
+    loaded_drop_ins, api_drop_ins = ({}, {})
+else:
+    loaded_drop_ins, api_drop_ins = load_drop_ins()

@@ -29,13 +29,39 @@ Prometheus is then queried by [Grafana](https://grafana.com/) which in turns dis
 
 ## Installation
 ### Requirements
-Tested on Python 3.7.3.
+Tested on Python 3.9.2.
 Latest pip version.
 Rustc >= 1.48
+
+```shell
+sudo apt install -y libgpiod-dev i2c-tools
+sudo raspi-config nonint do_i2c 0
+
+python3 -m virtualenv venv
+source venv/bin/activate
+python3 -m pip install -r requirements-dev.txt # or requirements.txt
+```
 
 > WARNING
 >
 > Under construction, more will come later.
+
+## Usage
+### Environment variables
+Project variables
+- SEA_LEVEL_PRESSURE: specify the pressure at your location to obtain more accurate readings from the BME280 chip,
+
+Flask variables:
+- FLASK_ENV: `development` or `production`, used to alter Flask's env,
+- FLASK_APP: should be `ancs.py:app` by default in dev mode,
+- FLASK_DEBUG: enable debug mode,
+- LOG_LEVEL: log level for the debugger
+
+**Running tests**
+`python3 -m pytest .`
+
+**Running in dev mode**
+`SEA_LEVEL_PRESSURE=1017 FLASK_APP="ancs.py:app" FLASK_ENV=development FLASK_DEBUG=0 LOG_LEVEL=DEBUG python3 -u -m flask run --host=0.0.0.0 --port=8000`
 
 If you can find your way around this yourself, install python3, all required dependencies, and fire uWSGI like so:
 `LOG_LEVEL=DEBUG uwsgi uwsgi.ini`

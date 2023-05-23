@@ -9,11 +9,6 @@ class BaseI2CDropIn(BaseDropIn):
     """
     Base class used by I2C drop-ins.
     """
-
-    _address: int = None
-    _bus: int = None
-    _connector: object = None
-
     def __init__(self, bus: int, address: int, logger: Logger, connector: object = None) -> None:
         """
         Ctor
