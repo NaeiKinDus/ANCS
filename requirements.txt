@@ -7,7 +7,7 @@ Adafruit-PlatformDetect==3.46.0
 Adafruit-PureIO==1.1.10
 aniso8601==9.0.1
 attrs==23.1.0
-certifi==2023.5.7
+certifi==2023.7.22
 chardet==5.1.0
 cffi==1.15.1
 click==8.1.3
